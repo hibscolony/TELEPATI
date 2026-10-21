@@ -1,33 +1,45 @@
 # TELEPATI — Paddy Disease Detection
 
-Deteksi 11 kelas kondisi/penyakit padi menggunakan **supervised object detection**, dengan evaluasi **mAP@50** dan **Macro F1 @ IoU 0.50**.
+**YOLO26n FAST T4×2 • Supervised object detection • 11 kelas**
 
-## Notebook
+Notebook submission utama berasal dari **hasil eksekusi Kaggle yang diunggah pemilik repository**, bukan notebook template kosong.
 
-| Eksperimen | Notebook | Keterangan |
-| --- | --- | --- |
-| **YOLO26n FAST T4×2 (terbaru)** | [TELEPATI_YOLO26n_FAST_T4x2.ipynb](./TELEPATI_YOLO26n_FAST_T4x2.ipynb) | Kaggle T4 ×2; tahap boot 1 epoch, tahap 1 empat epoch, tahap 2 enam epoch; evaluasi validation/test; `gc` import sudah diperbaiki |
-| YOLO26n ABF + Knowledge Distillation (arsip) | [TELEPATI_YOLO26n_ABF.ipynb](./TELEPATI_YOLO26n_ABF.ipynb) | Pendekatan lama; tidak sama dengan FAST T4×2 |
+## Submission notebook (terbaru)
 
-## Menjalankan FAST T4×2 di Kaggle
+**[TELEPATI_YOLO26n_FAST_T4x2.ipynb](./TELEPATI_YOLO26n_FAST_T4x2.ipynb)**
 
-1. Tambahkan dataset TELEPATI yang memiliki anotasi COCO untuk **train**, **valid**, dan **test**.
-2. Aktifkan accelerator **GPU T4 ×2**. Pastikan dependencies dan pretrained weights tersedia.
-3. Jalankan notebook FAST berurutan. Tahap boot menghasilkan checkpoint awal, lalu tahap 1 dan tahap 2 melakukan fine-tuning YOLO26n.
-4. Simpan checkpoint penting melalui **Save Version** Kaggle atau unduh, karena file di `/kaggle/working` tidak dijamin bertahan jika runtime hilang.
-5. Ambil bobot akhir dari `/kaggle/working/telepati_abf/exports/fast_t4x2/final_best.pt`, setelah tahap 2 selesai.
-6. Gunakan **validation** untuk pemilihan confidence threshold; lakukan evaluasi **test** sesudah model dan threshold ditetapkan.
+Notebook memuat:
+- Pemetaan 11 kelas dari anotasi COCO ke YOLO dan audit sampel label;
+- Tahap boot (20% train), fine-tuning cepat (65% train), dan full-data fine-tuning (100% train);
+- Pelatihan supervised YOLO26n pada Kaggle GPU T4 ×2;
+- Evaluasi validation mAP dan Macro F1, pemilihan confidence pada validation;
+- Evaluasi test dengan confidence yang telah dipilih.
 
-> Pelatihan, mAP, dan Macro F1 pada notebook FAST belum diverifikasi di GitHub. Jangan mencantumkan skor tanpa output evaluasi yang sesuai. Tidak ada zero-shot pada pipeline ini.
+## Hasil evaluasi yang tercatat di output notebook
 
-## Bobot model di GitHub
+| Metrik | Validation | Test |
+| --- | ---: | ---: |
+| mAP@50 | 65.32% | **67.06%** |
+| Macro F1 @ IoU 0.50 | 63.97% | **65.54%** |
 
-[Release **YoloABF**](https://github.com/hibscolony/TELEPATI/releases/tag/YoloABF) berisi bobot **`best_yolo26n_abf_kd.pt` dari pendekatan ABF/KD lama**. Bobot tersebut **bukan** hasil training FAST T4×2.
+Confidence optimal di validation: **0.25**. Macro F1 mengikuti implementasi matching berbasis IoU yang ada di notebook. Angka di atas disalin dari **output run** pada notebook yang diunggah, bukan hasil eksekusi ulang di luar Kaggle.
 
-**Bobot FAST T4×2 belum diunggah ke repo/release.** Setelah file `final_best.pt` tersedia dari Kaggle, buat release terpisah (misalnya `FAST-T4x2-v1`) agar bobot lama tidak tertukar.
+## Reproduksi
 
-## Catatan data
+1. Siapkan dataset TELEPATI dengan anotasi COCO untuk train, valid, dan test.
+2. Jalankan notebook di Kaggle dengan GPU T4 ×2, mengikuti konfigurasi dataset pada notebook.
+3. Simpan hasil model akhir dari `/kaggle/working/telepati_abf/exports/fast_t4x2/final_best.pt`.
+4. Gunakan validation untuk memilih threshold; test hanya untuk evaluasi final.
+5. Simpan bobot model secara persisten (Kaggle Save Version/download); runtime Kaggle bisa dihapus.
 
-Pemetaan label lama menyatukan `paddy` dan `Rice-Leaf-Diseasee` ke `bacterial_leaf_blight`. Mapping ini perlu diperiksa secara manual terhadap anotasi asli, karena mungkin memengaruhi validitas hasil.
+**Perhatian:** pemetaan alias `paddy` dan `Rice-Leaf-Diseasee` ke `bacterial_leaf_blight` masih perlu diverifikasi terhadap label asli, sebagaimana dicatat notebook.
 
-Repositori tidak berisi seluruh dataset karena ukurannya dan kemungkinan ketentuan lisensinya.
+## Model weights — belum sinkron dengan notebook terbaru
+
+[Release **YoloABF**](https://github.com/hibscolony/TELEPATI/releases/tag/YoloABF) masih menyimpan `best_yolo26n_abf_kd.pt` dari percobaan **ABF + Knowledge Distillation sebelumnya**, **bukan** bobot dari notebook FAST T4×2 yang baru diunggah.
+
+Untuk melengkapi submission versi FAST, unggah `final_best.pt` hasil run Kaggle ke release baru, misalnya `FAST-T4x2-v1`, dan gunakan tautan release tersebut di formulir.
+
+## Arsip eksperimen
+
+Notebook [TELEPATI_YOLO26n_ABF.ipynb](./TELEPATI_YOLO26n_ABF.ipynb) dipertahankan sebagai riwayat metode lama.
